@@ -4,15 +4,16 @@ Why you would ever want to do that is beyond me! But it was fun to make this lit
 
 ## Features
 
-- Budget items
-- Track status of budgetted items
-- View month summary
+- Start with a sample budget
+- Modify the budget as you so desire
+- Track status of budgetted items (NONE, IGNORED, PENDING, CLEARED)
+- View a month's summary (total expenses, total income, balances)
 - Save budget as JSON
 - Load previously saved budgets
 
 ## Project Management
 
-**TODO**
+**Todos**
 
 - Edit budget item by Index
 - Delete budget item by Index
@@ -21,3 +22,8 @@ Why you would ever want to do that is beyond me! But it was fun to make this lit
 **Done**
 
 - ~~Commit all code to new repository and write a basic README~~
+
+**Roadmap**
+
+- Make Console renderer use a template based system
+- Generally make the layout of the budget more user-friendly (but hey, it's a console app!)
