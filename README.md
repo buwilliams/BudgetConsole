@@ -15,7 +15,10 @@ Why you would ever want to do that is beyond me! But it was fun to make this lit
 
 **Todos**
 
-- Future todo here
+- Add a column for `Due Date`
+- Sort by column
+- Organize by category
+- (maybe?) Color negatives values in Red
 
 **Done**
 
