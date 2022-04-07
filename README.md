@@ -15,13 +15,15 @@ Why you would ever want to do that is beyond me! But it was fun to make this lit
 
 **Todos**
 
-- Edit budget item by Index
-- Delete budget item by Index
-- Change the status of a budget item by Index
+- Future todo here
 
 **Done**
 
 - ~~Commit all code to new repository and write a basic README~~
+- ~~Added header color green which looks like the Matrix, nice!~~
+- ~~Edit budget item by Index~~
+- ~~Delete budget item by Index~~
+- ~~Change the status of a budget item by Index~~
 
 **Roadmap**
 

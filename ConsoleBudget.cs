@@ -37,11 +37,12 @@ namespace BudgetConsole
          */
         public void Print()
         {
-            Console.SetWindowSize(150, 75);
+            Console.SetWindowSize(200, 80);
 
             while(true)
             {
                 Clear();
+                ChangeColor(true);
                 RenderBlank();
                 RenderCenteredLine(GetLine(STAR, 0.5));
                 RenderCenteredLine("Welcome to Budgetting in your Console!");
@@ -54,12 +55,16 @@ namespace BudgetConsole
                 RenderLine(GetLine(DASH));
                 RenderLine(PrintableHeaders());
                 RenderLine(GetLine(DASH));
+
+                ChangeColor();
+
                 
                 foreach(LineItem i in GetExpense())
                 {
                     RenderLine(PrintableLineItem(i));
                 }
 
+                ChangeColor(true);
                 RenderBlank();
                 RenderBlank();
                 RenderLine(GetLine(DASH));
@@ -67,11 +72,15 @@ namespace BudgetConsole
                 RenderLine(GetLine(DASH));
                 RenderLine(PrintableHeaders());
                 RenderLine(GetLine(DASH));
+
+                ChangeColor();
+
                 foreach(LineItem i in GetIncome())
                 {
                     RenderLine(PrintableLineItem(i));
                 }
 
+                ChangeColor(true);
                 RenderBlank();
                 RenderBlank();
                 RenderLine(GetLine(DASH));
@@ -79,8 +88,12 @@ namespace BudgetConsole
                 RenderLine(GetLine(DASH));
                 RenderLine(PrintableTotalsHeaders());
                 RenderLine(GetLine(DASH));
+                ChangeColor();
                 RenderTotals();
+                ChangeColor(true);
                 RenderLine(GetLine(DASH));
+                ChangeColor();
+
                 RenderBlank();
                 RenderBlank();
                 RenderMenu();
@@ -88,8 +101,30 @@ namespace BudgetConsole
             }
         }
 
+        private void ChangeColor(bool highlight = false)
+        {
+            if(highlight)
+            {
+                Console.ForegroundColor = ConsoleColor.Green;
+            } else
+            {
+                Console.ResetColor();
+            }
+
+        }
+
         private bool HandleMenu()
         {
+            if(!Saved)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(string.Format("Status: changes have not been saved to {0}/{1}", Month, Year));
+                Console.ResetColor();
+            } else {
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine(string.Format("Status: saved in {0}/{1}", Month, Year));
+                Console.ResetColor();
+            }
             string option = Ask("Enter option: ", true);
             switch(option)
             {
@@ -151,18 +186,44 @@ namespace BudgetConsole
         private bool HandleStatus()
         {
             Saved = false;
+            int index = AskIndex();
+            LineItem item = items[index];
+            Status status = AskStatus(item.Status);
+            item.Status = status;
             return true;
         }
 
         private bool HandleDelete()
         {
             Saved = false;
+            int index = AskIndex();
+            items.RemoveAt(index);
             return true;
         }
 
         private bool HandleEdit()
         {
             Saved = false;
+            int index = AskIndex();
+
+            LineItem li = items[index];
+
+            li.Name = AskName(li.Name);
+            double amount = AskAmount(li.Amount);
+            li.Amount = amount;
+            double remaining = AskRemaining(li.Remaining);
+            li.Remaining = remaining;
+            Type type = AskType(li.Type);
+            li.Type = type;
+            if(li.Type == Type.INCOME)
+            {
+                li.Category = Category.OTHER;
+            }
+            else
+            {
+                li.Category = AskCategory(li.Category);
+            }
+
             return true;
         }
 
@@ -196,6 +257,12 @@ namespace BudgetConsole
             return true;
         }
 
+        private int AskIndex()
+        {
+            string index = Ask("Enter index: ", false);
+            return Convert.ToInt32(index);
+        }
+
         private int AskMonth()
         {
             string month = Ask("Enter month: ", false);
@@ -227,6 +294,17 @@ namespace BudgetConsole
             double amount = Convert.ToDouble(stringAmount);
             return amount;
         }
+
+        private double AskRemaining(double? current)
+        {
+            if(current != null)
+            {
+                RenderLine("Current remaining: " + current);
+            }
+            string stringAmount = Ask("Enter remaining: ", false);
+            double remaining = Convert.ToDouble(stringAmount);
+            return remaining;
+        }
         private Type AskType(Type? current)
         {
             if(current != null)
@@ -251,6 +329,17 @@ namespace BudgetConsole
             }
             string stringAmount = Ask("Enter category, (N)one, (B)ills, (D)ebt, (L)iving, (C)hild, (O)ther, OVER(F)LOW: ", true);
             return StringToCategory(stringAmount);
+        }
+
+        private Status AskStatus(Status? current)
+        {
+            if(current != null)
+            {
+                RenderLine("Current status: " + current);
+            }
+            
+            string stringAmount = Ask("Enter status, (N)one, (I)gnore, (P)ending, (C)lear:", true);
+            return StringToStatus(stringAmount);
         }
 
         private string CategoryToString(Category? category)
@@ -297,6 +386,21 @@ namespace BudgetConsole
             }
         }
 
+        private Status StringToStatus(string status)
+        {
+            switch(status)
+            {
+                case "c":
+                    return Status.CLEARED;
+                case "i":
+                    return Status.IGNORED;
+                case "p":
+                    return Status.PENDING;
+                default:
+                    return Status.NONE;
+            }
+        }
+
         private string Ask(string prompt, bool lowerCase = false)
         {
             Console.Write(prompt);
@@ -308,7 +412,7 @@ namespace BudgetConsole
         private string PrintableTotalsHeaders()
         {
             string line = string.Format(
-                "{0} -> {1} -> {2}",
+                "{0} {1} {2}",
                 Pad("Name", (int) COLUMNS.INDEX + (int) COLUMNS.STATUS + (int) COLUMNS.NAME + (int) COLUMNS.CATEGORY),
                 Pad("Amount", (int) COLUMNS.AMOUNT),
                 Pad("Remaining", (int) COLUMNS.REMAINING)
@@ -322,21 +426,21 @@ namespace BudgetConsole
             Tally tally = Totals();
 
             string income = string.Format(
-                "{0} -> ${1} -> ${2}",
+                "{0} ${1} ${2}",
                 Pad("Income", (int)COLUMNS.INDEX + (int)COLUMNS.STATUS + (int)COLUMNS.NAME + (int)COLUMNS.CATEGORY),
                 Pad(FormatMoney(tally.incomeAmountTotal), (int)COLUMNS.AMOUNT),
                 Pad(FormatMoney(tally.incomeRemainingTotal), (int) COLUMNS.REMAINING)
             );
 
             string expenses = string.Format(
-                "{0} -> ${1} -> ${2}",
+                "{0} ${1} ${2}",
                 Pad("Expenses", (int)COLUMNS.INDEX + (int)COLUMNS.STATUS + (int)COLUMNS.NAME + (int)COLUMNS.CATEGORY),
                 Pad(FormatMoney(tally.expenseAmountTotal), (int)COLUMNS.AMOUNT),
                 Pad(FormatMoney(tally.expenseRemainingTotal), (int)COLUMNS.REMAINING)
             );
 
             string balance = string.Format(
-                "{0} -> ${1} -> ${2}",
+                "{0} ${1} ${2}",
                 Pad("Balance", (int)COLUMNS.INDEX + (int)COLUMNS.STATUS + (int)COLUMNS.NAME + (int)COLUMNS.CATEGORY),
                 Pad(FormatMoney(tally.balanceTotal), (int)COLUMNS.AMOUNT),
                 Pad(FormatMoney(tally.balanceRemaining), (int)COLUMNS.REMAINING)
@@ -350,7 +454,7 @@ namespace BudgetConsole
         private string PrintableHeaders()
         {
             string line = string.Format(
-                "{0} {1} {2} {3} -> {4} -> {5}",
+                "{0} {1} {2} {3} {4} {5}",
                 Pad("Index", (int) COLUMNS.INDEX),
                 Pad("Status", (int) COLUMNS.STATUS),
                 Pad("Name", (int) COLUMNS.NAME),
@@ -383,7 +487,7 @@ namespace BudgetConsole
             }
 
             string line = string.Format(
-                "{0} {1} {2} {3} -> ${4} -> ${5}",
+                "{0} {1} {2} {3} ${4} ${5}",
                 Pad(index, (int) COLUMNS.INDEX),
                 Pad(status, (int) COLUMNS.STATUS),
                 Pad(i.Name, (int) COLUMNS.NAME),
@@ -413,7 +517,7 @@ namespace BudgetConsole
 
         private void RenderMenu()
         {
-            RenderLine("Options: (A)dd (E)dit, (D)elete, (S)tatus, (R)emove All, (N)ew, (L)oad, (S)ave, (Q)uit");
+            RenderLine("Options: (A)dd (E)dit, (D)elete, S(t)atus, (R)emove All, (N)ew, (L)oad, (S)ave, (Q)uit");
         }
 
         private void RenderLine(string line)
